@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import redis
+import json
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
@@ -169,6 +172,7 @@ class Technician(Base):
     name: Mapped[str] = mapped_column(String(100))
     specialty: Mapped[str] = mapped_column(String(100))
     active: Mapped[bool] = mapped_column(default=True)
+    country: Mapped[str] = mapped_column(String(100))
 
     tickets: Mapped[list[Ticket]] = relationship(back_populates="technician")
 
@@ -213,6 +217,8 @@ class Comment(Base):
 # ============================================================
 
 engine = create_engine("postgresql+psycopg://postgres@localhost:5432/postgres")
+
+redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
 # ============================================================
 # OPTIONAL INITIAL SAMPLE DATA
@@ -608,6 +614,8 @@ def get_tickets():
 
 @app.get("/tickets/{ticket_id}", response_model=TicketOut)
 def get_ticket(ticket_id: int):
+
+    key = f"ti"
     with Session(engine) as session:
         return get_ticket_or_404(session, ticket_id)
 
